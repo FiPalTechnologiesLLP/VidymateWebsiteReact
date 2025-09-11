@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom Swiper.js Styles */
+.swiper-button-next,
+.swiper-button-prev {
+  color: white !important;
+  transition: opacity 0.3s;
+}
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  opacity: 0.7;
+}
+
+.swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.5) !important;
+  width: 12px !important;
+  height: 12px !important;
+  opacity: 1 !important;
+  transition: background-color 0.3s;
+}
+
+.swiper-pagination-bullet-active {
+  background: white !important;
+}
+

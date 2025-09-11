@@ -38,7 +38,7 @@ const Header = () => {
               className="w-auto" 
               style={{ height: '1.75rem' }}
             />
-            <span className="text-xl font-bold text-gray-800">Vidyamate</span>
+            <span className="text-xl font-bold text-gray-800">VidyaMate</span>
           </Link>
         </div>
         

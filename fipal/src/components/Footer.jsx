@@ -1,55 +1,90 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import logo from '../assets/logo-footer.JPG';
 
-// A small, reusable component for social media icons to keep the code clean
+// A small, reusable component for social media icons with hover animations
 const SocialIcon = ({ href, children, label }) => (
-  <a 
+  <motion.a 
     href={href} 
     target="_blank" 
     rel="noopener noreferrer" 
     aria-label={label}
     className="text-gray-500 hover:text-cyan-500 transition-colors"
+    whileHover={{ scale: 1.2, rotate: 10 }}
+    transition={{ type: "spring", stiffness: 300 }}
   >
     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
       {children}
     </svg>
-  </a>
+  </motion.a>
+);
+
+// A reusable component for footer links with hover animations
+const FooterLink = ({ to, children }) => (
+  <motion.li whileHover={{ x: 5 }} transition={{ type: "spring", stiffness: 400 }}>
+    <Link to={to} className="text-gray-600 hover:text-cyan-500">{children}</Link>
+  </motion.li>
 );
 
 const Footer = () => {
+  // Animation variants for staggering the columns
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  };
+
   return (
-    <footer className="bg-sky-50 border-t border-gray-200">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-12 gap-8">
+    <motion.footer 
+      className="bg-sky-100 border-t border-gray-200"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+    >
+      <div className="container mx-auto px-4 py-16">
+        <motion.div 
+          className="grid grid-cols-2 md:grid-cols-12 gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           
           {/* Column 1: Useful Links */}
-          <div className="col-span-1 md:col-span-2">
+          <motion.div variants={itemVariants} className="col-span-1 md:col-span-2">
             <h4 className="font-bold text-gray-800 mb-4">Useful Links</h4>
             <ul className="space-y-2">
-              <li><Link to="/" className="text-gray-600 hover:text-cyan-500">Home</Link></li>
-              <li><Link to="/about" className="text-gray-600 hover:text-cyan-500">About us</Link></li>
-              <li><Link to="/plans" className="text-gray-600 hover:text-cyan-500">Plans</Link></li>
-              <li><a href="#" className="text-gray-600 hover:text-cyan-500">Products</a></li>
-              <li><Link to="/contact" className="text-gray-600 hover:text-cyan-500">Contact</Link></li>
+              <FooterLink to="/">Home</FooterLink>
+              <FooterLink to="/about">About us</FooterLink>
+              <FooterLink to="/plans">Plans</FooterLink>
+              <FooterLink to="/contact">Contact</FooterLink>
             </ul>
-          </div>
+          </motion.div>
 
           {/* Column 2: Our Services */}
-          <div className="col-span-1 md:col-span-4">
+          <motion.div variants={itemVariants} className="col-span-1 md:col-span-4">
             <h4 className="font-bold text-gray-800 mb-4">Our Services</h4>
             <ul className="space-y-2">
-              <li><Link to="/school-management" className="text-gray-600 hover:text-cyan-500">School Management System</Link></li>
-              <li><Link to="/admission-management" className="text-gray-600 hover:text-cyan-500">Admission Management System</Link></li>
-              <li><Link to="/learning-management" className="text-gray-600 hover:text-cyan-500">Learning Management System</Link></li>
-              <li><Link to="/transport-management" className="text-gray-600 hover:text-cyan-500">Transport Management System</Link></li>
-              <li><Link to="/fee-management" className="text-gray-600 hover:text-cyan-500">Fees Management System</Link></li>
-              <li><Link to="/payroll-management" className="text-gray-600 hover:text-cyan-500">Payroll Management System</Link></li>
+              <FooterLink to="/school-management">School Management System</FooterLink>
+              <FooterLink to="/admission-management">Admission Management System</FooterLink>
+              <FooterLink to="/learning-management">Learning Management System</FooterLink>
+              <FooterLink to="/transport-management">Transport Management System</FooterLink>
+              <FooterLink to="/fee-management">Fees Management System</FooterLink>
+              <FooterLink to="/payroll-management">Payroll Management System</FooterLink>
             </ul>
-          </div>
+          </motion.div>
           
           {/* Column 3: Contact Details */}
-          <div className="col-span-2 md:col-span-3">
+          <motion.div variants={itemVariants} className="col-span-2 md:col-span-3">
             <h4 className="font-bold text-gray-800 mb-4">Contact Details</h4>
             <div className="text-gray-600 space-y-3">
               <p><i className="fa-solid fa-envelope mr-2 text-gray-400"></i>support@vidyamate.in</p>
@@ -59,22 +94,22 @@ const Footer = () => {
                 <span>FiPal Technologies LLP,<br />Vannaiah Zinna Colony, Kanekal,<br />Anantapur, Andhra Pradesh</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Column 4: About & Social Links */}
-          <div className="col-span-2 md:col-span-3">
-            <Link to="/" className="flex items-center space-x-2 mb-4">
-              {/* Updated logo styling with mix-blend-multiply */}
-              <img 
+          <motion.div variants={itemVariants} className="col-span-2 md:col-span-3">
+            <Link to="/" className="inline-block mb-4">
+              <motion.img 
                 src={logo} 
                 alt="Vidyamate Logo" 
                 className="h-12 w-auto rounded-md shadow-sm mix-blend-multiply" 
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
               />
             </Link>
             <p className="text-sm text-gray-600 mt-2">Empowering education through innovative and intuitive software solutions.</p>
             
-            {/* Social Media Links using SVGs */}
-            <div className="flex space-x-4 mt-4">
+            <div className="flex space-x-4 mt-6">
               <SocialIcon href="https://twitter.com" label="Twitter">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </SocialIcon>
@@ -89,16 +124,17 @@ const Footer = () => {
                 <path d="M4 2a2 2 0 100 4 2 2 0 000-4z" />
               </SocialIcon>
             </div>
-          </div>
-        </div>
+          </motion.div>
+
+        </motion.div> 
       </div>
 
-      <div className="bg-gray-100 py-4">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-500">
+      <div className="bg-sky-200 py-4">
+        <div className="container mx-auto px-4 text-center text-sm text-gray-600">
           <p>@ Copyright 2024 | Vidyamate. All Rights Reserved.</p>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 };
 
