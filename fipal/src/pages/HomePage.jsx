@@ -1,307 +1,373 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules'; // EffectFade is removed
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-// Removed the fade effect CSS as it's no longer needed
-
-import Counter from '../components/Counter';
-
-// Import images
+// --- Local Image Imports ---
+// Swapped back to your original import statements.
 import heroBg1 from '../assets/hero-bg.jpg';
-import heroBg2 from '../assets/hero-bg-2.jpg';
-import heroBg3 from '../assets/hero-bg-3.jpg';
 import aboutImg from '../assets/about.jpg';
+import personaSchool from '../assets/schools.png';
+import personaTeacher from '../assets/teacher.png';
+import personaStudent from '../assets/student.png';
+import personaParent from '../assets/parent.png';
 
-// Reusable card components with animations
+
+// --- Reusable Counter Component ---
+// A simple counter component that animates from 0 to a target number.
+const Counter = ({ end, suffix = '' }) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (isInView) {
+      const duration = 2000; // 2 seconds
+      const frameRate = 1000 / 60; // 60fps
+      const totalFrames = Math.round(duration / frameRate);
+      let frame = 0;
+
+      const counter = setInterval(() => {
+        frame++;
+        const progress = frame / totalFrames;
+        // Ease-out cubic easing function for a smoother stop
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        setCount(Math.floor(end * easedProgress));
+
+        if (frame === totalFrames) {
+          clearInterval(counter);
+          setCount(end); // Ensure it ends on the exact number
+        }
+      }, frameRate);
+
+      return () => clearInterval(counter);
+    }
+  }, [isInView, end]);
+
+  // A helper hook to detect when an element is in view
+  function useInView(ref, options) {
+    const [isInView, setIsInView] = useState(false);
+    useEffect(() => {
+      const element = ref.current;
+      if (!element) return;
+
+      const observer = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          if (options.once) {
+            observer.unobserve(element);
+          }
+        }
+      }, options);
+
+      observer.observe(element);
+
+      return () => observer.disconnect();
+    }, [ref, options]);
+    return isInView;
+  }
+
+  return (
+    <span ref={ref}>
+      {count}{suffix}
+    </span>
+  );
+};
+
+
+// --- Animation Variants ---
+// Standardized variants for consistent animations across sections.
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } },
+};
+
+// --- Reusable Section Header ---
+const SectionHeader = ({ title, subtitle }) => (
+  <motion.div
+    className="text-center mb-12 md:mb-16"
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, amount: 0.3 }}
+    variants={{
+      hidden: { opacity: 0, y: 30 },
+      visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+    }}
+  >
+    <h2 className="text-3xl md:text-4xl font-bold text-gray-800">{title}</h2>
+    {subtitle && <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">{subtitle}</p>}
+  </motion.div>
+);
+
+
+// --- Reusable Card Components ---
+
 const FeatureCard = ({ icon, title, link }) => (
   <motion.div
-    className="relative group p-4 h-full"
-    whileHover={{ y: -10, scale: 1.05 }}
-    transition={{ type: "spring", stiffness: 300 }}
+    variants={itemVariants}
+    className="h-full"
   >
-    <div className="flex items-center bg-white shadow-md rounded-lg p-6 h-full">
-      <i className={`${icon} text-3xl text-cyan-500 mx-3`}></i>
-      <h3 className="text-lg font-semibold text-gray-800">
-        <Link to={link} className="focus:outline-none">
-          <span className="absolute inset-0" aria-hidden="true"></span>
-          {title}
-        </Link>
-      </h3>
-    </div>
-  </motion.div>
-);
-
-const InfoCard = ({ icon, title, children }) => (
-  <motion.div 
-    className="bg-white p-6 rounded-lg shadow-md border border-gray-200 h-full"
-    whileHover={{ y: -5, scale: 1.03 }}
-    transition={{ type: "spring", stiffness: 300 }}
-  >
-    <div className="flex items-center justify-center h-12 w-12 rounded-full bg-cyan-50 mb-4">
-      {icon}
-    </div>
-    <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
-    <p className="text-gray-600">{children}</p>
-  </motion.div>
-);
-
-const TestimonialCard = ({ quote, name, school }) => (
-    <motion.div 
-        className="bg-white p-8 rounded-lg shadow-lg h-full" 
-        whileHover={{ y: -10, scale: 1.05 }}
-        transition={{ type: "spring", stiffness: 300 }}
-    >
-        <p className="text-gray-600 italic">"{quote}"</p>
-        <div className="mt-4">
-            <p className="font-bold text-gray-800">{name}</p>
-            <p className="text-sm text-cyan-600">{school}</p>
+    <Link to={link} className="block group h-full">
+      <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl border border-gray-100 h-full transition-all duration-300 transform hover:-translate-y-2">
+        <div className="flex items-center space-x-4">
+          <i className={`${icon} text-3xl text-cyan-500 group-hover:text-cyan-600 transition-colors`}></i>
+          <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
         </div>
-    </motion.div>
+      </div>
+    </Link>
+  </motion.div>
 );
+
+const TestimonialCard = ({ quote, name, title }) => (
+  <motion.div
+    variants={itemVariants}
+    className="bg-white p-8 rounded-xl shadow-lg h-full flex flex-col"
+  >
+    <div className="flex-grow">
+      <p className="text-gray-600 italic">"{quote}"</p>
+    </div>
+    <div className="mt-6 pt-4 border-t border-gray-200">
+      <p className="font-bold text-gray-800">{name}</p>
+      <p className="text-sm text-cyan-600 font-medium">{title}</p>
+    </div>
+  </motion.div>
+);
+
+const PersonaCard = ({ title, description, image, bgColor }) => (
+    <motion.div
+      variants={itemVariants}
+      className={`group ${bgColor} rounded-2xl shadow-lg flex flex-row justify-between overflow-hidden h-full p-8`}
+    >
+      {/* Text Section */}
+      <div className="w-3/5">
+        <h3 className="text-2xl font-bold text-gray-800">{title}</h3>
+        <p className="mt-2 text-gray-600">{description}</p>
+      </div>
+  
+      {/* Image Section */}
+      <div className="w-2/5 flex items-end -mr-8 -mb-8">
+        <img
+          src={image}
+          alt={title}
+          className="max-h-full w-auto object-contain grayscale transition-all duration-500 group-hover:grayscale-0 group-hover:scale-105"
+        />
+      </div>
+    </motion.div>
+  );
+
+
+// --- Main HomePage Component ---
 
 const HomePage = () => {
-  // Animation variants for staggering children
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
+  // Data for the rotating hero text
+  const features = [
+    { text: 'simplifying fee management', color: 'text-green-400' },
+    { text: 'automating admissions', color: 'text-blue-400' },
+    { text: 'streamlining transport', color: 'text-purple-400' },
+    { text: 'managing hostels', color: 'text-orange-400' },
+    { text: 'empowering teachers', color: 'text-pink-400' },
+    { text: 'engaging parents', color: 'text-indigo-400' },
+  ];
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 },
-  };
+  const [featureIndex, setFeatureIndex] = useState(0);
 
-  // Data for the hero slider
-  const slides = [
-    {
-      image: heroBg1,
-      title: "Empowering Education, One Click at a Time",
-      subtitle: "Integrated software solutions designed to streamline school administration and enhance learning."
-    },
-    {
-      image: heroBg2,
-      title: "Seamless Admission & Enrollment",
-      subtitle: "Digitize your entire admissions workflow, from online applications to final enrollment, effortlessly."
-    },
-    {
-      image: heroBg3,
-      title: "A Connected Learning Community",
-      subtitle: "Bridge the gap between teachers, students, and parents with our integrated communication and learning platform."
-    }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFeatureIndex((prevIndex) => (prevIndex + 1) % features.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [features.length]);
+
+  // Data for sections
+  const personas = [
+    { title: 'Schools', description: 'Automate operations, boost efficiency and reduce overheads with the most powerful school management platform by your side.', image: personaSchool, bgColor: 'bg-yellow-50' },
+    { title: 'Teachers', description: 'Create an enriching learning environment through world-class learning content along with digital tools that simplify every classroom operation.', image: personaTeacher, bgColor: 'bg-cyan-50' },
+    { title: 'Students', description: 'Never miss a lesson with continuous learning at your fingertips through classroom recordings, unlimited practice questions and much more.', image: personaStudent, bgColor: 'bg-purple-50' },
+    { title: 'Parents', description: 'Monitor & track your children\'s progress with complete transparency and stay on top of all the school updates with ease.', image: personaParent, bgColor: 'bg-pink-50' },
+  ];
+
+  const coreProducts = [
+    { icon: "fa-solid fa-school-flag", title: "School Management", link: "/school-management" },
+    { icon: "fa-solid fa-user-check", title: "Admission & Enrollment", link: "/admission-management" },
+    { icon: "fa-solid fa-chalkboard-user", title: "Learning Management (LMS)", link: "/learning-management" },
+    { icon: "fa-solid fa-bus-simple", title: "Transport Management", link: "/transport-management" },
+    { icon: "fa-solid fa-file-invoice-dollar", title: "Fee & Billing Automation", link: "/fee-management" },
+    { icon: "fa-solid fa-money-check-dollar", title: "Payroll & HR", link: "/payroll-management" },
+  ];
+
+  const whyChooseUsPoints = [
+    { icon: <i className="fa-solid fa-layer-group text-2xl text-cyan-600"></i>, title: "All-in-One Platform", text: "Manage everything from a single, intuitive dashboard." },
+    { icon: <i className="fa-solid fa-shield-halved text-2xl text-cyan-600"></i>, title: "Data Security First", text: "Protected with enterprise-grade security and encryption." },
+    { icon: <i className="fa-solid fa-headset text-2xl text-cyan-600"></i>, title: "24/7 Priority Support", text: "Our dedicated support team is always available to help." },
+    { icon: <i className="fa-solid fa-arrows-spin text-2xl text-cyan-600"></i>, title: "Seamless Integration", text: "Integrates effortlessly with your existing tools." },
+  ];
+
+  const testimonials = [
+    { quote: "Vidyamate has completely transformed our administrative workflow. The efficiency gains in fee management alone are remarkable.", name: "Mrs. Anjali Sharma", title: "Principal, Vidyanikethan School" },
+    { quote: "The transport management system is a game-changer. Real-time bus tracking has given our parents immense peace of mind.", name: "Mr. Rajeev Verma", title: "Administrator, PSR English Medium School" },
+    { quote: "The LMS is incredibly user-friendly. It has made resource sharing and tracking academic progress seamless and effective.", name: "Dr. Priya Kulkarni", title: "Head of Academics, Vivekananda School" },
   ];
 
   return (
-    <>
-      {/* Hero Slider Section */}
-      <section className="relative h-[80vh] w-full">
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay]} // EffectFade module removed
-          spaceBetween={0}
-          slidesPerView={1}
-          navigation
-          pagination={{ clickable: true }}
-          loop={true}
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
-          // The effect="fade" prop has been removed to get the default slide effect
-          className="h-full w-full"
-        >
-          {slides.map((slide, index) => (
-            <SwiperSlide key={index} className="relative h-full w-full">
-              <div
-                className="h-full w-full bg-cover bg-center"
-                style={{ backgroundImage: `url(${slide.image})` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="relative h-full flex items-center justify-center text-center text-white z-10">
-                  <div className="container mx-auto px-4">
-                    <motion.h2 
-                        key={slide.title}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="text-5xl md:text-6xl font-bold"
-                    >
-                      {slide.title}
-                    </motion.h2>
-                    <motion.p 
-                        key={slide.subtitle}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="mt-4 text-lg max-w-3xl mx-auto"
-                    >
-                      {slide.subtitle}
-                    </motion.p>
-                    <motion.div 
-                        key={`button-${index}`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="mt-8"
-                    >
-                      <Link to="/get-started" className="border-2 border-white text-white font-semibold px-8 py-3 rounded-full hover:bg-white hover:text-black transition-colors text-lg">
-                        Get Started
-                      </Link>
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </section>
-      
-      {/* About Section */}
-      <section className="bg-white py-16 lg:py-24">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div data-aos="fade-up">
-              <img src={aboutImg} className="rounded-lg shadow-lg w-full" alt="Educators collaborating" />
+    <div className="bg-gray-50 overflow-x-hidden"> {/* Added overflow-x-hidden to prevent horizontal scroll during animations */}
+      {/* --- HERO SECTION --- */}
+      <section
+        className="relative flex items-center justify-center h-[85vh] bg-cover bg-center" // Reduced height
+        style={{ backgroundImage: `url(${heroBg1})` }}
+      >
+        <div className="absolute inset-0 bg-black/60" aria-hidden="true"></div>
+        <div className="relative text-center px-4 z-10">
+          <motion.h1 className="text-4xl md:text-6xl font-extrabold text-white" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+            All-in-One School Management
+          </motion.h1>
+          <motion.div className="mt-4 text-2xl md:text-4xl text-gray-200" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
+            <p>Streamline. Simplify. Succeed by</p>
+            <div className="h-12 md:h-16 mt-2">
+              <AnimatePresence mode="wait">
+                <motion.span key={features[featureIndex].text} className={`font-bold ${features[featureIndex].color}`} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} transition={{ duration: 0.5, ease: 'easeInOut' }}>
+                  {features[featureIndex].text}
+                </motion.span>
+              </AnimatePresence>
             </div>
-            <div data-aos="fade-up" data-aos-delay="100">
-              <h3 className="text-3xl font-bold text-gray-800">Designed for Growth, Built for Educators</h3>
-              <p className="mt-4 italic text-gray-600">
-                At Vidyamate, we believe technology should simplify complexity. Our suite of tools is crafted to handle the administrative burdens of modern education, freeing up educators to focus on what matters most: student success.
-              </p>
-              <ul className="mt-6 space-y-3">
-                <li className="flex items-start"><i className="bi bi-check-circle text-cyan-500 mr-3 mt-1"></i> <span>Intuitive interfaces that require minimal training.</span></li>
-                <li className="flex items-start"><i className="bi bi-check-circle text-cyan-500 mr-3 mt-1"></i> <span>Secure, cloud-based access from anywhere, on any device.</span></li>
-                <li className="flex items-start"><i className="bi bi-check-circle text-cyan-500 mr-3 mt-1"></i> <span>Scalable solutions that grow with your institution.</span></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Counts Section */}
-      <section className="py-16 lg:py-24 bg-cyan-50 text-cyan-800">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <span className="text-5xl font-bold text-cyan-600"><Counter end={500} />+</span>
-              <p className="mt-2 font-medium">Partner Schools</p>
-            </div>
-            <div>
-              <span className="text-5xl font-bold text-cyan-600"><Counter end={200} suffix="k" /></span>
-              <p className="mt-2 font-medium">Active Students</p>
-            </div>
-            <div>
-              <span className="text-5xl font-bold text-cyan-600"><Counter end={99} suffix="%" /></span>
-              <p className="mt-2 font-medium">Client Satisfaction</p>
-            </div>
-            <div>
-              <span className="text-5xl font-bold text-cyan-600">24/7</span>
-              <p className="mt-2 font-medium">Customer Support</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose Us Section */}
-      <section className="bg-white py-16 lg:py-24">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-            <div className="bg-cyan-500 text-white p-8 rounded-lg flex flex-col justify-between" data-aos="fade-up">
-              <div>
-                <h3 className="text-3xl font-bold">Why Choose Our Products?</h3>
-                <p className="mt-4 opacity-90">
-                  Our platform is engineered to address the core challenges of modern educational institutions, providing a seamless, integrated experience that drives efficiency and fosters a collaborative community.
-                </p>
-              </div>
-              <div className="mt-6">
-                <Link to="/about" className="bg-white text-cyan-600 font-bold py-3 px-6 rounded-lg hover:bg-gray-100 transition-colors">
-                  Learn More
-                </Link>
-              </div>
-            </div>
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 gap-8"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-            >
-              <motion.div variants={itemVariants}><InfoCard icon={<i className="fa-solid fa-layer-group text-2xl text-cyan-500"></i>} title="Unified Platform">Manage all tasks from a single, intuitive dashboard.</InfoCard></motion.div>
-              <motion.div variants={itemVariants}><InfoCard icon={<i className="fa-solid fa-shield-halved text-2xl text-cyan-500"></i>} title="Secure & Reliable">Your data is protected with industry-leading security.</InfoCard></motion.div>
-              <motion.div variants={itemVariants}><InfoCard icon={<i className="fa-solid fa-headset text-2xl text-cyan-500"></i>} title="Dedicated Support">Our expert team is available 24/7 to assist you.</InfoCard></motion.div>
-              <motion.div variants={itemVariants}><InfoCard icon={<i className="fa-solid fa-mobile-screen-button text-2xl text-cyan-500"></i>} title="Mobile Friendly">Access key features on the go with our responsive interface.</InfoCard></motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-16 lg:py-24 bg-cyan-50">
-        <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-                <h2 className="text-4xl font-bold text-gray-800">Trusted by Leading Institutions</h2>
-                <p className="mt-4 text-lg text-gray-600">Hear what our partners have to say about Vidyamate.</p>
-            </div>
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-            >
-                <motion.div variants={itemVariants}>
-                  <TestimonialCard 
-                      quote="Vidyamate has transformed our administrative process. The fee and admission management modules are incredibly efficient and have saved our staff countless hours."
-                      name="Principal"
-                      school="Vidyanikethan School"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <TestimonialCard 
-                      quote="The transport management system is a game-changer for student safety. Parents have peace of mind with real-time tracking, and our routes are now more optimized than ever."
-                      name="Administrator"
-                      school="PSR English Medium School"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <TestimonialCard 
-                      quote="As a teacher, the Learning Management System has been invaluable. Sharing resources and tracking student progress is simple and intuitive. It's a fantastic tool for modern education."
-                      name="Head of Academics"
-                      school="Vivekananda School"
-                  />
-                </motion.div>
-            </motion.div>
-        </div>
-      </section>
-
-      {/* Core Products Section */}
-      <section className="bg-white py-16 lg:py-24">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-800">Our Core Products</h2>
-            <p className="mt-4 text-lg text-gray-600">A complete ecosystem for your educational institution.</p>
-          </div>
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-          >
-            <motion.div variants={itemVariants}><FeatureCard icon="fa-solid fa-school" title="School Management System" link="/school-management" /></motion.div>
-            <motion.div variants={itemVariants}><FeatureCard icon="fa-solid fa-user-plus" title="Admission Management System" link="/admission-management" /></motion.div>
-            <motion.div variants={itemVariants}><FeatureCard icon="fa-solid fa-book-open-reader" title="Learning Management System" link="/learning-management" /></motion.div>
-            <motion.div variants={itemVariants}><FeatureCard icon="fa-solid fa-bus" title="Transport Management System" link="/transport-management" /></motion.div>
-            <motion.div variants={itemVariants}><FeatureCard icon="fa-solid fa-receipt" title="Fees Management System" link="/fee-management" /></motion.div>
-            <motion.div variants={itemVariants}><FeatureCard icon="fa-solid fa-file-invoice-dollar" title="Payroll Management System" link="/payroll-management" /></motion.div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4 }} className="mt-8">
+            <Link to="/get-started" className="bg-cyan-500 text-white font-bold px-8 py-3 rounded-full hover:bg-cyan-600 transition-colors text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              Request a Demo
+            </Link>
           </motion.div>
         </div>
       </section>
-    </>
+
+      {/* --- ABOUT SECTION --- */}
+      <section className="py-16 lg:py-20"> {/* Reduced padding */}
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.7 }}>
+              <img src={aboutImg} className="rounded-xl shadow-2xl w-full" alt="Team collaborating" />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.7 }}>
+              <span className="font-semibold text-cyan-600">ABOUT VIDYAMATE</span>
+              <h2 className="mt-2 text-3xl font-bold text-gray-800">Engineered for Education, Designed for People</h2>
+              <p className="mt-4 text-gray-600">
+                At Vidyamate, our mission is to empower educational institutions with technology that is both powerful and intuitive. We handle the complexities of school administration so you can dedicate your resources to fostering student growth and academic excellence.
+              </p>
+              <ul className="mt-6 space-y-4 text-gray-700">
+                <li className="flex items-start"><i className="bi bi-check-circle-fill text-green-500 mr-3 mt-1"></i> <strong>User-Centric Design:</strong> Minimal training required for staff, teachers, and parents.</li>
+                <li className="flex items-start"><i className="bi bi-check-circle-fill text-green-500 mr-3 mt-1"></i> <strong>Cloud-Powered & Secure:</strong> Access from anywhere, on any device, with peace of mind.</li>
+                <li className="flex items-start"><i className="bi bi-check-circle-fill text-green-500 mr-3 mt-1"></i> <strong>Scalable for Growth:</strong> Our solutions adapt and grow with your institution's needs.</li>
+              </ul>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- PERSONAS SECTION --- */}
+      <section className="py-16 lg:py-20 bg-white"> {/* Reduced padding */}
+        <div className="container mx-auto px-6">
+          <SectionHeader title={<>Enable better outcomes <br /><span className="text-cyan-600">for everyone</span></>} />
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-8" variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+            {personas.map((persona) => <PersonaCard key={persona.title} {...persona} />)}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* --- CORE PRODUCTS SECTION --- */}
+      <section className="py-16 lg:py-20"> {/* Reduced padding */}
+        <div className="container mx-auto px-6">
+          <SectionHeader title="A Complete Ecosystem for Your Institution" subtitle="Explore our integrated suite of modules designed to cover every aspect of school management." />
+          <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+            {coreProducts.map((product) => <FeatureCard key={product.title} {...product} />)}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* --- WHY CHOOSE US SECTION --- */}
+      <section className="py-16 lg:py-20"> {/* Reduced padding */}
+        <div className="container mx-auto px-6">
+          <div className="bg-cyan-600 rounded-2xl p-8 md:p-12 lg:p-16 text-white grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.8 }}>
+              <h2 className="text-3xl font-bold">Why Partner with Vidyamate?</h2>
+              <p className="mt-4 opacity-90 text-lg">
+                We go beyond software to provide a partnership dedicated to your success. Our platform is built on a foundation of reliability, security, and a deep understanding of the challenges modern schools face.
+              </p>
+              <Link to="/about" className="mt-8 inline-block bg-white text-cyan-600 font-bold py-3 px-8 rounded-full hover:bg-gray-100 transition-all shadow-md">
+                Learn More About Us
+              </Link>
+            </motion.div>
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-6" variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }}>
+              {whyChooseUsPoints.map((point) => (
+                <motion.div key={point.title} variants={itemVariants} className="bg-white/10 p-5 rounded-lg">
+                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-white mb-4">{point.icon}</div>
+                  <h3 className="font-bold text-lg">{point.title}</h3>
+                  <p className="text-sm opacity-80 mt-1">{point.text}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- TESTIMONIALS SECTION --- */}
+      <section className="py-16 lg:py-20 bg-white"> {/* Reduced padding */}
+        <div className="container mx-auto px-6">
+          <SectionHeader title="Trusted by Leading Educational Institutions" subtitle="Hear what our partners have to say about their experience with Vidyamate." />
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+            {testimonials.map((testimonial) => <TestimonialCard key={testimonial.name} {...testimonial} />)}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* --- COUNTS SECTION --- */}
+      <section className="py-16 lg:py-20 bg-gray-800 text-white"> {/* Reduced padding */}
+        <div className="container mx-auto px-6">
+          <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center" variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }}>
+            <motion.div variants={itemVariants}>
+              <span className="text-5xl font-bold text-cyan-400"><Counter end={500} suffix="+" /></span>
+              <p className="mt-2 font-medium text-gray-300">Partner Schools</p>
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <span className="text-5xl font-bold text-cyan-400"><Counter end={200} suffix="k+" /></span>
+              <p className="mt-2 font-medium text-gray-300">Active Users</p>
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <span className="text-5xl font-bold text-cyan-400"><Counter end={99} suffix="%" /></span>
+              <p className="mt-2 font-medium text-gray-300">Client Retention</p>
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <span className="text-5xl font-bold text-cyan-400">24/7</span>
+              <p className="mt-2 font-medium text-gray-300">Dedicated Support</p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* --- CTA SECTION --- */}
+      <section className="py-16 lg:py-20 bg-gradient-to-r from-cyan-600 to-blue-600 text-white"> {/* Reduced padding */}
+        <div className="container mx-auto px-6 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.5 }} transition={{ duration: 0.7 }}>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Transform Your Institution?</h2>
+            <p className="text-xl max-w-3xl mx-auto mb-8 opacity-90">
+              Join hundreds of schools that have revolutionized their operations with Vidyamate.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Link to="/get-started" className="bg-white text-cyan-600 font-bold px-8 py-3 rounded-full hover:bg-gray-100 transition-colors text-lg shadow-lg hover:shadow-xl">
+                Request a Demo
+              </Link>
+              <Link to="/contact" className="bg-transparent border-2 border-white text-white font-bold px-8 py-3 rounded-full hover:bg-white hover:text-cyan-600 transition-colors text-lg">
+                Contact Sales
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    </div>
   );
 };
 
