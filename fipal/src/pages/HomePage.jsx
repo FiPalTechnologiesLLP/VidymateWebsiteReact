@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Local Image Imports ---
-// Swapped back to your original import statements.
 import heroBg1 from '../assets/hero-bg.jpg';
 import aboutImg from '../assets/about.jpg';
 import personaSchool from '../assets/schools.png';
@@ -372,4 +371,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-

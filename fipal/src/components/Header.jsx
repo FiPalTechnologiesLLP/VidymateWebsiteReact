@@ -45,7 +45,6 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex flex-grow items-center justify-center space-x-8">
           <NavLink to="/" end className={getNavLinkClass}>Home</NavLink>
-          <NavLink to="/about" className={getNavLinkClass}>About Us</NavLink>
           <NavLink to="/plans" className={getNavLinkClass}>Plans</NavLink>
           
           {/* Product Mega Menu - The entire div now controls the hover state */}
@@ -94,6 +93,8 @@ const Header = () => {
           </div>
           
           <NavLink to="/contact" className={getNavLinkClass}>Contact</NavLink>
+          <NavLink to="/about" className={getNavLinkClass}>About Us</NavLink>
+
         </nav>
 
         {/* Right Section */}
