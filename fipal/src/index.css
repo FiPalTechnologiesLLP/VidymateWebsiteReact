@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom Swiper.js Styles */
+/* Custom Swiper.js Styles (if you use it on other pages) */
 .swiper-button-next,
 .swiper-button-prev {
   color: white !important;
@@ -25,3 +25,9 @@
   background: white !important;
 }
 
+/* --- Styles for Abstract Hero Background --- */
+
+/* This creates the beautiful background gradient for the hero section */
+.hero-gradient-bg {
+  background: linear-gradient(135deg, #0f172a, #0b2e4b, #084c7d);
+}
