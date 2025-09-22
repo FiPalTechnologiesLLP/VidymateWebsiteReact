@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
@@ -19,7 +19,7 @@ import PayrollManagementPage from './pages/PayrollManagementPage';
 import SchoolManagementPage from './pages/SchoolManagementPage';
 import TransportManagementPage from './pages/TransportManagementPage';
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <Layout />,
@@ -29,7 +29,7 @@ const router = createBrowserRouter([
       { path: "contact", element: <ContactPage /> },
       { path: "plans", element: <PlansPage /> },
       { path: "get-started", element: <GetStartedPage /> },
-      
+
       // Product Routes
       { path: "admission-management", element: <AdmissionManagementPage /> },
       { path: "fee-management", element: <FeesManagementPage /> },
@@ -47,7 +47,7 @@ function App() {
       duration: 1000,
       easing: 'ease-in-out',
       once: true,
-      mirror: false
+      mirror: false,
     });
   }, []);
 
